@@ -1,0 +1,22 @@
+--Transacción 2--
+create or replace procedure transaccion_pagoventa(varchar,varchar, numeric)
+as
+$$
+declare
+	y int;
+	begin
+			insert into pago_reventa(codigo_pago, codigo_reventa, valor_pago) values($1,$2,$3);	
+			update reventa_pesca set precio_reventa=precio_reventa-$3 where codigo_reventa=$2;
+			select precio_reventa into y from reventa_pesca where reventa_pesca.codigo_reventa=$2;
+			if (y=0) then
+				update reventa_pesca set estado_reventa='pagado' where codigo_reventa=$2;	
+			end if;
+	exception
+		when sqlstate '23514' then
+		raise exception 'No se pudo procesar el pago';
+		rollback;
+	commit;
+end;
+$$
+language plpgsql;
+

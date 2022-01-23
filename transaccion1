@@ -1,0 +1,23 @@
+---Transacción1
+create or replace procedure transaccion_estado_contenedor(varchar,varchar, varchar,text, text, numeric)
+as
+$$
+declare
+    x int;
+    begin
+            insert into pesca(codigo_registro_pesca, codigo_barco, codigo_contenedor, tipo_pesca, tipo_pescado, peso_pesca) values($1,$2,$3,$4,$5,$6);
+            update contenedor set capacidad=capacidad-$6 where codigo_contenedor=$3;
+            select capacidad into x from contenedor where contenedor.codigo_contenedor=$3;
+            if (x=0) then
+                update contenedor set estado='lleno' where codigo_contenedor=$3;
+            end if;
+    exception
+        when sqlstate '23514' then
+        raise exception 'El peso de la pesca sobrepasa la capacidad del contenedor, elija otro';
+        rollback;
+    commit;
+end;
+$$
+language plpgsql;
+
+
